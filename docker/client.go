@@ -12,8 +12,9 @@ import (
 
 type DockerClient interface {
 	ListImages(context.Context, types.ImageListOptions) ([]string, error)
-    ListContainers(context.Context, types.ContainerListOptions) ([]string, error)
+    ListContainers(context.Context, types.ContainerListOptions) (map[string] string, error)
 	CreateContainer(context.Context, string, *ContainerCfg, *specs.Platform) (string, error)
+    StartContainer(context.Context, string) error
 }
 
 type dockerClient struct {
@@ -48,15 +49,15 @@ func (client *dockerClient) ListImages(ctx context.Context, opts types.ImageList
 	return tags, nil
 }
 
-func (client *dockerClient) ListContainers(ctx context.Context, opts types.ContainerListOptions) ([]string, error) {
-	var containers []string
+func (client *dockerClient) ListContainers(ctx context.Context, opts types.ContainerListOptions) (map[string] string, error) {
+    containers := map[string] string{}
 	c, err := client.Client.ContainerList(ctx, opts)
 	if err != nil {
 		return containers, err
 	}
 
     for _, container := range c {
-        containers = append(containers, container.Names[0][1:])
+        containers[container.Names[0][1:]] = container.ID
     }
 	return containers, nil
 }
@@ -70,6 +71,6 @@ func (client *dockerClient) CreateContainer(ctx context.Context, name string, co
 }
 
 
-func (client *dockerClient) RunContainer() {
-
+func (client *dockerClient) StartContainer(ctx context.Context, containerID string) error {
+    return client.ContainerStart(ctx, containerID, types.ContainerStartOptions{})
 }

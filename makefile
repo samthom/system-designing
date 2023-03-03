@@ -1,2 +1,3 @@
+.PHONY: rate-limiter
 rate-limiter:
-	go run cmd/rate-limiter-test/main.go
+	go run cmd/rate-limiter-test/*.go
