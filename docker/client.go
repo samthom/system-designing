@@ -15,6 +15,7 @@ type DockerClient interface {
     ListContainers(context.Context, types.ContainerListOptions) (map[string] string, error)
 	CreateContainer(context.Context, string, *ContainerCfg, *specs.Platform) (string, error)
     StartContainer(context.Context, string) error
+    StopContainer(context.Context, string) error
 }
 
 type dockerClient struct {
@@ -73,4 +74,8 @@ func (client *dockerClient) CreateContainer(ctx context.Context, name string, co
 
 func (client *dockerClient) StartContainer(ctx context.Context, containerID string) error {
     return client.ContainerStart(ctx, containerID, types.ContainerStartOptions{})
+}
+
+func (client *dockerClient) StopContainer(ctx context.Context, containerID string) error {
+    return client.ContainerStop(ctx, containerID, nil)
 }
