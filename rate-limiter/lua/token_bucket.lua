@@ -19,6 +19,7 @@ end
 local delta = math.max(0, now-last_refreshed)
 local filled_tokens = math.min(capacity, last_tokens+(delta*rate))
 
+local New_tokens = 0
 local allowed = filled_tokens >= requested
 if allowed then
     New_tokens = filled_tokens - requested

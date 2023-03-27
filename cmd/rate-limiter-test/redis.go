@@ -32,7 +32,7 @@ func startRedis(ctx context.Context, client docker_client.DockerClient) (bool, s
 func stopRedis(ctx context.Context, client docker_client.DockerClient, containerID string) bool {
     err := client.StopContainer(ctx, containerID)
     if err != nil {
-        log.Panic("StopContainer(%q) failed: %v\nunable stop container", containerID, err)
+        log.Panicf("StopContainer(%q) failed: %v\nunable stop container", containerID, err)
         return false
     }
     return true
