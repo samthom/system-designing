@@ -26,7 +26,7 @@ func main() {
 	// }
 
 	v := testTokenBucket(ctx)
-	log.Printf("result from test is %t", v)
+    log.Printf("test result: %t", v)
 
 	// stopped := stopRedis(ctx, client, containerID)
 	// if stopped {
@@ -51,8 +51,8 @@ func redisConnect() *redis.Client {
 func testTokenBucket(ctx context.Context) bool {
 	// create new client
 	client := redisConnect()
-    pop := client.Ping(ctx)
-    fmt.Printf("Ping: %s\n", pop.Val())
+	pop := client.Ping(ctx)
+	fmt.Printf("Ping: %s\n", pop.Val())
 	reqData := [3]map[string]int{}
 	reqData[0] = map[string]int{
 		"achu": 25,
@@ -70,25 +70,17 @@ func testTokenBucket(ctx context.Context) bool {
 		"tom":  30,
 	}
 
-    bucket, err := tokenbucket.NewTokenBucket(10, 20, "token-bucket:", "./rate-limiter/lua")
+	bucket, err := tokenbucket.NewTokenBucket(10, 20, "token-bucket:", "./rate-limiter/lua")
 	if err != nil {
 		log.Fatalf("Unable create NewTokenBucket instance: %v", err)
 	}
 
-    // ok, err :=  bucket.CheckRequestRateLimiter(ctx, client, "sam")
-    // if err != nil {
-    //     log.Panicf("error request rate limiter: %v\n", err)
-    //     return false 
-    // } 
-    // return ok
-
-    var isSuccess bool
+	var success bool
 	// send requests with 1sec interval and send each inside our reqData slice
 	for i, item := range reqData {
 		// send reqeuest (call rate limiter function)
 		for key, val := range item {
-			// create channel for each user
-			success := make([]chan bool, 3)
+			result := make(chan bool)
 			go func(key string, val int, second int, s chan bool) {
 				var (
 					success int = 0
@@ -103,26 +95,19 @@ func testTokenBucket(ctx context.Context) bool {
 						fail++
 					}
 				}
-				fmt.Printf("Second: %d, User: %s, Total: %d, Success: %d, Failed: %d\n", second+1, key, val, success, fail)
-				if val > 20 && success == 20 {
+				log.Printf("Second: %d, User: %s, Total: %d, Success: %d, Failed: %d\n", second+1, key, val, success, fail)
+				if success == 20 {
 					s <- true
 				} else {
 					s <- false
 				}
 
-			}(key, val, i, success[i])
-			for _, r := range success {
-                isSuccess = <-r
-                fmt.Println(isSuccess)
-			}
+			}(key, val, i, result)
+			success = <-result
+            success = success && true
 		}
 		// sleep for 1 sec
 		time.Sleep(1 * time.Second)
 	}
-	time.Sleep(4 * time.Second)
-	return isSuccess
+	return success
 }
-
-// func sendReq(ctx context.Context, client *redis.Client, bucket tokenbucket.RateLimiter, name string, req chan int) {
-//         bucket.CheckRequestRateLimiter(ctx, client, name)
-// }
