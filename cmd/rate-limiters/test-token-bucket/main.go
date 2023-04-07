@@ -6,27 +6,27 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v9"
+	redis_container "github.com/samthom/system-designing/lib/redis"
 	docker_client "github.com/samthom/system-designing/pkg/docker"
-    redis_container "github.com/samthom/system-designing/lib/redis"
 	tokenbucket "github.com/samthom/system-designing/pkg/rate-limiter/token-bucket"
 )
 
 func main() {
-    ctx := createAContext()
+	ctx := createAContext()
 	dockerClient, err := docker_client.NewDockerClient()
 	if err != nil {
 		log.Panicf("NewDockerClient() failed: %v", err)
 	}
 
-    redisContainer, _ := setupRedisContainer(ctx, dockerClient)
-    redisClient, err := redis_container.RedisConnect(ctx)
-    if err != nil {
-        log.Fatal(err)
-    }
+	redisContainer, _ := setupRedisContainer(ctx, dockerClient)
+	redisClient, err := redis_container.RedisConnect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	v := testTokenBucket(ctx, redisClient)
-    log.Printf("test result: %t", v)
+	log.Printf("test result: %t", v)
 
-    stopped := redisContainer.StopRedis(ctx)
+	stopped := redisContainer.StopRedis(ctx)
 	if stopped {
 		log.Printf("redis container stopped successfully.")
 		return
@@ -36,42 +36,43 @@ func main() {
 }
 
 func createAContext() context.Context {
-    ctx := context.TODO()
+	ctx := context.TODO()
 	// ctx, _ = context.WithCancel(ctx)
-    return ctx
+	return ctx
 }
 
 func setupRedisContainer(ctx context.Context, dockerClient docker_client.DockerClient) (redis_container.RedisContainer, error) {
-    redisContainer := redis_container.GetRedis(ctx, dockerClient)
-    containerID, err := redisContainer.StartRedis(ctx)
+	redisContainer := redis_container.GetRedis(ctx, dockerClient)
+	containerID, err := redisContainer.StartRedis(ctx)
 	if err == nil {
 		log.Printf("redis container started successfully. container id: %q", containerID)
-        return redisContainer, nil
+		return redisContainer, nil
 	} else {
 		log.Fatalf("startRedis() failed. %v", err)
-        return redisContainer, err
+		return redisContainer, err
 	}
 }
 
-func testTokenBucket(ctx context.Context, redisClient redis.Cmdable) bool {
-	// create new client
-	reqData := [3]map[string]int{}
-	reqData[0] = map[string]int{
+var reqData = [3]map[string]int{
+	{
 		"achu": 25,
 		"bob":  25,
 		"tom":  20,
-	}
-	reqData[1] = map[string]int{
+	},
+	{
+
 		"achu": 20,
 		"bob":  21,
 		"tom":  26,
-	}
-	reqData[2] = map[string]int{
+	},
+	{
 		"achu": 15,
 		"bob":  18,
 		"tom":  30,
-	}
+	},
+}
 
+func testTokenBucket(ctx context.Context, redisClient redis.Cmdable) bool {
 	bucket, err := tokenbucket.NewTokenBucket(10, 20, "token-bucket:", "./pkg/rate-limiter/lua")
 	if err != nil {
 		log.Fatalf("Unable create NewTokenBucket instance: %v", err)
@@ -106,7 +107,7 @@ func testTokenBucket(ctx context.Context, redisClient redis.Cmdable) bool {
 
 			}(key, val, i, result)
 			success = <-result
-            success = success && true
+			success = success && true
 		}
 		// sleep for 1 sec
 		time.Sleep(1 * time.Second)
