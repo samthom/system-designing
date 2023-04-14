@@ -32,4 +32,4 @@ local ttl = 20
 redis.call("setex", tokens_key, ttl, New_tokens)
 redis.call("setex", timestamp_key, ttl, now)
 
-return { allowed }
+return allowed

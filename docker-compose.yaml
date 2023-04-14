@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  redis-for-lua: 
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    volumes:
+      - $PWD:/tmp

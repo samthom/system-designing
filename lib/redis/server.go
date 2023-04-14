@@ -1,4 +1,4 @@
-package redis_container
+package rediscontainer
 
 import (
 	"context"
@@ -12,6 +12,9 @@ import (
 	docker_client "github.com/samthom/system-designing/pkg/docker"
 )
 
+const TAG = "redis:latest"
+const CONTAINER_NAME = "redis-latest-rate-limiter-demo"
+const PORT = "6379"
 
 type RedisContainer interface {
 	StartRedis(ctx context.Context) (containerID string, err error)
@@ -159,4 +162,16 @@ func arrayContains(items []string, item string) bool {
 	}
 
 	return false
+}
+
+func SetupRedisContainer(ctx context.Context, dockerClient docker_client.DockerClient) (RedisContainer, error) {
+	redisContainer := GetRedis(ctx, dockerClient)
+	containerID, err := redisContainer.StartRedis(ctx)
+	if err == nil {
+		log.Printf("redis container started successfully. container id: %q", containerID)
+		return redisContainer, nil
+	} else {
+		log.Fatalf("startRedis() failed. %v", err)
+		return redisContainer, err
+	}
 }
